@@ -356,8 +356,43 @@ page_decref(struct PageInfo* pp)
 pte_t *
 pgdir_walk(pde_t *pgdir, const void *va, int create)
 {
+	pde_t pdir_entry = NULL;
+	pte_t ptable_entry = NULL:
+	pte_t ptable_addr = NULL;
+
+	PageInfo* dir_page = NULL;
+	PageInfo* ptable_page = NULL;
 	// Fill this function in
-	return NULL;
+	if (pgdir)
+	{
+		pdir_entry = pgdir[PDX(va)];
+		if (pdir_entry & PTE_P) 
+		{
+			ptable_addr = (pte_t)PTE_ADDR(pdir_entry);
+			ptable_entry = ptable_addr[PTX(va)];
+		}
+		if (!ptable_entry && create)
+		{
+			if (!pdir_entry) 
+			{
+				dir_page = page_alloc(0);
+				if (dir_page) 
+				{
+					dir_page->pp_ref += 1;
+					pdir_entry = page2pa(dir_page) | PTE_P | PTE_W;
+					ptable_page = page_alloc(0);
+					if (ptable_page)
+					{
+						ptable_page->pp_ref += 1;
+						ptable_entry = page2pa(ptable_page) | PTE_P | PTE_W;
+					}
+				}
+
+			}
+
+		}
+	}
+	return ptable_entry;
 }
 
 //
