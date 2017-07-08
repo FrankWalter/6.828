@@ -186,7 +186,9 @@ env_setup_vm(struct Env *e)
 	//    - The functions in kern/pmap.h are handy.
 
 	// LAB 3: Your code here.
-
+	p->pp_ref++;
+	e->env_pgdir = page2kva(p);
+	memcpy(e->env_pgdir, kern_pgdir, PGSIZE);
 	// UVPT maps the env's own page table read-only.
 	// Permissions: kernel R, user R
 	e->env_pgdir[PDX(UVPT)] = PADDR(e->env_pgdir) | PTE_P | PTE_U;
@@ -274,6 +276,17 @@ region_alloc(struct Env *e, void *va, size_t len)
 	//   'va' and 'len' values that are not page-aligned.
 	//   You should round va down, and round (va + len) up.
 	//   (Watch out for corner-cases!)
+	void* iter;
+	PageInfo* p;
+	for(iter = ROUNDDOWN(va, PGSIZE); iter < ROUNDUP(va + len); iter += PGSIZE)
+	{
+		if (!(p = page_alloc(0)))
+		{
+			panic("region_alloc: out of memory \n");
+		}
+		page_insert(e->env_pgdir, p, iter, PTE_U | PTE_W);
+	}
+
 }
 
 //
@@ -330,11 +343,36 @@ load_icode(struct Env *e, uint8_t *binary)
 	//  What?  (See env_run() and env_pop_tf() below.)
 
 	// LAB 3: Your code here.
+	struct Proghdr *ph, *eph;
+	struct Elf* el = (struct Elf *)binary;
+	struct PageInfo *p = NULL;
 
+	lcr3(PADDR(e->env_pgdir));
+	ph = (struct Proghdr *) (binary + el->e_phoff);
+	eph = ph + el->e_phnum;
+	for (; ph < eph; ph++)
+	{
+		if(ph->p_type == ELF_PROG_LOAD)
+		{
+			if(ph->p_filesz > ph->p_memsz)
+			{
+				panic("load_icode: p_filesz should less equal than p_memsz\n");
+			}
+			region_alloc(e, ph->p_va, ph->p_memsz);
+			memset(ph->p_va, 0, ph->p_memsz);
+			memcpy(ph->p_va, binary + ph->p_offset, ph->p_filesz);
+		}
+	}
+	e->env_tf.tf_eip = (uintptr_t)(el->e_entry);
 	// Now map one page for the program's initial stack
 	// at virtual address USTACKTOP - PGSIZE.
 
 	// LAB 3: Your code here.
+	if (!(p = page_alloc(ALLOC_ZERO)))
+	{
+		panic("load_icode: out of memory\n");
+	}
+	page_insert(e->env_pgdir, p, USTACKTOP - PGSIZE, PTE_W | PTE_U);
 }
 
 //
@@ -348,6 +386,10 @@ void
 env_create(uint8_t *binary, enum EnvType type)
 {
 	// LAB 3: Your code here.
+	struct Env* new_env;
+	env_alloc(&new_env, 0);
+	new_env->env_type = type;
+	load_icode(new_env, binary);
 }
 
 //
