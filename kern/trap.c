@@ -24,6 +24,7 @@ struct Gatedesc idt[256] = { { 0 } };
 struct Pseudodesc idt_pd = {
 	sizeof(idt) - 1, (uint32_t) idt
 };
+extern unsigned int vectors[];
 
 
 static const char *trapname(int trapno)
@@ -64,7 +65,14 @@ trap_init(void)
 {
 	extern struct Segdesc gdt[];
 
+	int i;
+
 	// LAB 3: Your code here.
+	for (i = 0; i < 256; i++)
+	{
+		SETGATE(idt[i], 0, GD_KD, vectors[i], 0)
+	}
+	cprintf("trap_init: \n");
 
 	// Per-CPU setup 
 	trap_init_percpu();
