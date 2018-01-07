@@ -70,9 +70,13 @@ trap_init(void)
 	// LAB 3: Your code here.
 	for (i = 0; i < 256; i++)
 	{
-		SETGATE(idt[i], 0, GD_KD, vectors[i], 0)
+		SETGATE(idt[i], 0, GD_KT, vectors[i], 0);
+        if (i <= 48)
+        {
+            cprintf("vector[%d] is 0x%x\n", i, vectors[i]);
+        }
 	}
-	cprintf("trap_init: \n");
+	cprintf("trap_init: and vectors address is %p\n", vectors);
 
 	// Per-CPU setup 
 	trap_init_percpu();
