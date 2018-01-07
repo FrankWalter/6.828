@@ -996,7 +996,6 @@ check_page(void)
 	va = (void*)(PGSIZE * NPDENTRIES + PGSIZE);
 	ptep = pgdir_walk(kern_pgdir, va, 1);
 	ptep1 = (pte_t *) KADDR(PTE_ADDR(kern_pgdir[PDX(va)]));
-	cprintf("ptep is %p and ptep1 is %p and PTX(va) is %p\n", ptep, ptep1, (void*)PTX(va));
 	assert(ptep == ptep1 + PTX(va));
 	kern_pgdir[PDX(va)] = 0;
 	pp0->pp_ref = 0;

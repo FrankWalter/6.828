@@ -70,13 +70,19 @@ trap_init(void)
 	// LAB 3: Your code here.
 	for (i = 0; i < 256; i++)
 	{
-		SETGATE(idt[i], 0, GD_KT, vectors[i], 0);
-        if (i <= 48)
+        if (i == T_BRKPT)
         {
-            cprintf("vector[%d] is 0x%x\n", i, vectors[i]);
+            SETGATE(idt[i], 1, GD_KT, vectors[i], 3);
+        }
+        else if (i == T_SYSCALL)
+        {
+            SETGATE(idt[i], 0, GD_KT, vectors[i], 3);
+        }
+		else 
+        {
+            SETGATE(idt[i], 1, GD_KT, vectors[i], 0);
         }
 	}
-	cprintf("trap_init: and vectors address is %p\n", vectors);
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -155,7 +161,31 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
+    struct PushRegs* tf_regs;
+    int32_t result;
+    switch(tf->tf_trapno) {
+        case T_PGFLT:
+            page_fault_handler(tf);
+            break;
+        case T_BRKPT:
+            monitor(tf);
+            break;
+        case T_SYSCALL:
+            tf_regs = &(tf->tf_regs);
+            result = syscall(tf_regs->reg_eax,
+                             tf_regs->reg_edx,
+                             tf_regs->reg_ecx,
+                             tf_regs->reg_ebx,
+                             tf_regs->reg_edi,
+                             tf_regs->reg_esi);
+            curenv->env_tf.tf_regs.reg_eax = result;
+            break;
+        default:
+            goto error;
+    }
+    return;
 
+ error:
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
 	if (tf->tf_cs == GD_KT)
@@ -198,6 +228,7 @@ trap(struct Trapframe *tf)
 
 	// Dispatch based on what type of trap occurred
 	trap_dispatch(tf);
+    cprintf("end of trap\n");
 
 	// Return to the current environment, which should be running.
 	assert(curenv && curenv->env_status == ENV_RUNNING);
