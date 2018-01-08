@@ -139,7 +139,8 @@ include lib/Makefrag
 include user/Makefrag
 
 
-QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img  -gdb tcp::$(GDBPORT) -serial mon:stdio 
+ QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img  -gdb tcp::$(GDBPORT) -serial mon:stdio 
+# QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img  -gdb tcp::$(GDBPORT) -vnc :51 -monitor stdio
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
 IMAGES = $(OBJDIR)/kern/kernel.img
 QEMUOPTS += $(QEMUEXTRA)

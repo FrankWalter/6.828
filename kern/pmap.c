@@ -383,7 +383,6 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 	struct PageInfo* dir_page = NULL;
 	struct PageInfo* ptable_page = NULL;
 	// Fill this function in
-	//cprintf("pgdir_walk: va %p, create %d\n", va, create);
 	if (pgdir)
 	{
 		pdir_entry = pgdir[PDX(va)];
@@ -445,7 +444,6 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 	for(; i < size; i += PGSIZE)
 	{
 		dir_iter = pgdir[PDX(va)];
-		//cprintf("va = %x\n", va);
 		if (!dir_iter)
 		{
 			page = page_alloc(ALLOC_ZERO);
@@ -454,11 +452,10 @@ boot_map_region(pde_t *pgdir, uintptr_t va, size_t size, physaddr_t pa, int perm
 			{
 				panic("out of memory during boot_map_region\n");
 			}
-			dir_iter = pgdir[PDX(va)] = page2pa(page) | PTE_P | PTE_W;
+			dir_iter = pgdir[PDX(va)] = page2pa(page) | PTE_P | perm;
 
 		}
 		ptable_addr = (pte_t*)KADDR(PTE_ADDR(dir_iter));
-		//cprintf("boot_map_region: ptable_addr is %p \n", ptable_addr);
 		ptable_addr[PTX(va)] = pa | PTE_P | perm;
 		pa += PGSIZE;
 		va += PGSIZE;
@@ -623,8 +620,23 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
-
+    void *va_iter = (void*)va;
+    pte_t *pte_iter = NULL;
+    while (va_iter < va + len)
+    {
+        pte_iter = NULL;
+        page_lookup(env->env_pgdir, va_iter, &pte_iter);
+        if (!pte_iter)
+            goto fail;
+        if ((uint32_t)va_iter >= ULIM && 
+            ((perm & (*pte_iter & ((1 << PGSHIFT) - 1))) != perm))
+            goto fail;
+        va_iter += PGSIZE;
+    }
 	return 0;
+ fail:
+    user_mem_check_addr = va_iter == va ? (uintptr_t)va : (uintptr_t)ROUNDDOWN(va_iter, PGSIZE);
+    return -E_FAULT;
 }
 
 //
