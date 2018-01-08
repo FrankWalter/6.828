@@ -29,6 +29,7 @@ struct Gatedesc idt[256] = { { 0 } };
 struct Pseudodesc idt_pd = {
 	sizeof(idt) - 1, (uint32_t) idt
 };
+extern unsigned int vectors[];
 
 
 static const char *trapname(int trapno)
@@ -71,7 +72,24 @@ trap_init(void)
 {
 	extern struct Segdesc gdt[];
 
+	int i;
+
 	// LAB 3: Your code here.
+	for (i = 0; i < 256; i++)
+	{
+        if (i == T_BRKPT)
+        {
+            SETGATE(idt[i], 1, GD_KT, vectors[i], 3);
+        }
+        else if (i == T_SYSCALL)
+        {
+            SETGATE(idt[i], 0, GD_KT, vectors[i], 3);
+        }
+		else 
+        {
+            SETGATE(idt[i], 1, GD_KT, vectors[i], 0);
+        }
+	}
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -173,20 +191,42 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
+    struct PushRegs* tf_regs;
+    int32_t result;
+    switch(tf->tf_trapno) {
+        case T_PGFLT:
+            page_fault_handler(tf);
+            break;
+        case T_BRKPT:
+            monitor(tf);
+            break;
+        case T_SYSCALL:
+            tf_regs = &(tf->tf_regs);
+            result = syscall(tf_regs->reg_eax,
+                             tf_regs->reg_edx,
+                             tf_regs->reg_ecx,
+                             tf_regs->reg_ebx,
+                             tf_regs->reg_edi,
+                             tf_regs->reg_esi);
+            curenv->env_tf.tf_regs.reg_eax = result;
+            break;
+        // Handle spurious interrupts
+        // The hardware sometimes raises these because of noise on the
+        // IRQ line or other reasons. We don't care.
+        case IRQ_OFFSET + IRQ_SPURIOUS:
+            cprintf("Spurious interrupt on irq 7\n");
+            print_trapframe(tf);
+            break;
 
-	// Handle spurious interrupts
-	// The hardware sometimes raises these because of noise on the
-	// IRQ line or other reasons. We don't care.
-	if (tf->tf_trapno == IRQ_OFFSET + IRQ_SPURIOUS) {
-		cprintf("Spurious interrupt on irq 7\n");
-		print_trapframe(tf);
-		return;
-	}
+        // Handle clock interrupts. Don't forget to acknowledge the
+        // interrupt using lapic_eoi() before calling the scheduler!
+        // LAB 4: Your code here.    
+        default:
+            goto error;
+    }
+    return;
 
-	// Handle clock interrupts. Don't forget to acknowledge the
-	// interrupt using lapic_eoi() before calling the scheduler!
-	// LAB 4: Your code here.
-
+ error:
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
 	if (tf->tf_cs == GD_KT)
@@ -246,6 +286,7 @@ trap(struct Trapframe *tf)
 
 	// Dispatch based on what type of trap occurred
 	trap_dispatch(tf);
+    cprintf("end of trap\n");
 
 	// If we made it to this point, then no other environment was
 	// scheduled, so we should return to the current environment
@@ -268,7 +309,8 @@ page_fault_handler(struct Trapframe *tf)
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
-
+    if ((tf->tf_cs & 3) == 0)
+        panic("page fault in kernel mode\n");
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
 
