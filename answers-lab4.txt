@@ -1,0 +1,11 @@
+
+
+Question
+
+    1. Compare kern/mpentry.S side by side with boot/boot.S. Bearing in mind that kern/mpentry.S is compiled and linked to run above KERNBASE just like everything else in the kernel, what is the purpose of macro MPBOOTPHYS? Why is it necessary in kern/mpentry.S but not in boot/boot.S? In other words, what could go wrong if it were omitted in kern/mpentry.S?
+    Hint: recall the differences between the link address and the load address that we have discussed in Lab 1.
+     
+    Because the symbols in the mpentry.S associated with link address. For instance, the link address of start32 is f0105cbc, but the load addres is 0x7020(start32 - mpentry_start + MPENTRY_PADDR). The hardware is expected to use the link address.
+    In boot.S, the link address is equal to load address, so address translation is not needed.
+
+

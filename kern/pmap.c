@@ -213,7 +213,6 @@ mem_init(void)
 	// Permissions: kernel RW, user NONE
 	// Your code goes here:
 	boot_map_region(kern_pgdir, KERNBASE, (2 ^ 32) - KERNBASE, 0, PTE_P | PTE_W);
-	cprintf("i = %d, kern_pgdir[i] = %p\n", 0, kern_pgdir[0]);
 
 	// Initialize the SMP-related parts of the memory map
 	mem_init_mp();
@@ -265,7 +264,13 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
-
+    size_t i;
+    uintptr_t kstacktop_i;
+    for (i = 0; i < NCPU; i++)
+    {
+         kstacktop_i = KSTACKTOP - i * (KSTKSIZE + KSTKGAP);
+         boot_map_region(kern_pgdir, kstacktop_i - KSTKSIZE, KSTKSIZE, PADDR(percpu_kstacks[i]), PTE_P | PTE_W);
+    }
 }
 
 // --------------------------------------------------------------
@@ -307,7 +312,8 @@ page_init(void)
 	size_t i;
 	for (i = 0; i < npages; i++) {
 		pages[i].pp_ref = 0;
-		if((i > 0 && i < npages_basemem) || \
+        // TODO code modification
+		if((i > 0 && i < npages_basemem && (i * PGSIZE) != MPENTRY_PADDR) || \
 			(i * PGSIZE >= EXTPHYSMEM && i * PGSIZE >= (uint32_t)(PADDR(pages + npages * sizeof(struct PageInfo)))))
 		{
 			pages[i].pp_link = page_free_list;
@@ -662,7 +668,13 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+    uintptr_t result = base;
+    size = ROUNDUP(size, PGSIZE);
+    if (size + base > MMIOLIM)
+        panic("mmio reservation overflows MMIOLIM!");
+    boot_map_region(kern_pgdir, base, size, pa, PTE_PCD | PTE_PWT | PTE_W);
+    base += size;
+    return (void*)result;
 }
 
 static uintptr_t user_mem_check_addr;
