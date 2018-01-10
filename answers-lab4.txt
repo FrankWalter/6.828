@@ -5,7 +5,16 @@ Question
     1. Compare kern/mpentry.S side by side with boot/boot.S. Bearing in mind that kern/mpentry.S is compiled and linked to run above KERNBASE just like everything else in the kernel, what is the purpose of macro MPBOOTPHYS? Why is it necessary in kern/mpentry.S but not in boot/boot.S? In other words, what could go wrong if it were omitted in kern/mpentry.S?
     Hint: recall the differences between the link address and the load address that we have discussed in Lab 1.
      
-    Because the symbols in the mpentry.S associated with link address. For instance, the link address of start32 is f0105cbc, but the load addres is 0x7020(start32 - mpentry_start + MPENTRY_PADDR). The hardware is expected to use the link address.
+    Answer: Because the symbols in the mpentry.S associated with link address. For instance, the link address of start32 is f0105cbc, but the load addres is 0x7020(start32 - mpentry_start + MPENTRY_PADDR). The hardware is expected to use the link address.
     In boot.S, the link address is equal to load address, so address translation is not needed.
 
+    2. It seems that using the big kernel lock guarantees that only one CPU can run the kernel code at a time. Why do we still need separate kernel stacks for each CPU? Describe a scenario in which using a shared kernel stack will go wrong, even with the protection of the big kernel lock.
 
+
+    3. In your implementation of env_run() you should have called lcr3(). Before and after the call to lcr3(), your code makes references (at least it should) to the variable e, the argument to env_run. Upon loading the %cr3 register, the addressing context used by the MMU is instantly changed. But a virtual address (namely e) has meaning relative to a given address context--the address context specifies the physical address to which the virtual address maps. Why can the pointer e be dereferenced both before and after the addressing switch?
+    
+    Answer: Because the VA space of all envs is identical above UTOP, and envs maps to ENVS which is above UTOP.
+
+    4. Whenever the kernel switches from one environment to another, it must ensure the old environment's registers are saved so they can be restored properly later. Why? Where does this happen?
+    Answer: When an env trap to the kernel, the registers are saved to the env->env_tf, and env_pop_tf will restore the registers' values when rerun the env.
+ 

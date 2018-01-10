@@ -194,6 +194,7 @@ trap_dispatch(struct Trapframe *tf)
 	// LAB 3: Your code here.
     struct PushRegs* tf_regs;
     int32_t result;
+    //print_trapframe(tf);
     switch(tf->tf_trapno) {
         case T_PGFLT:
             page_fault_handler(tf);
@@ -264,6 +265,7 @@ trap(struct Trapframe *tf)
 		// Acquire the big kernel lock before doing any
 		// serious kernel work.
 		// LAB 4: Your code here.
+        lock_kernel();
 		assert(curenv);
 
 		// Garbage collect if current enviroment is a zombie
