@@ -289,7 +289,7 @@ trap(struct Trapframe *tf)
 
 	// Dispatch based on what type of trap occurred
 	trap_dispatch(tf);
-    cprintf("end of trap\n");
+    //cprintf("end of trap\n");
 
 	// If we made it to this point, then no other environment was
 	// scheduled, so we should return to the current environment
