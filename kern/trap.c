@@ -1,6 +1,7 @@
 #include <inc/mmu.h>
 #include <inc/x86.h>
 #include <inc/assert.h>
+#include <inc/string.h>
 
 #include <kern/pmap.h>
 #include <kern/trap.h>
@@ -305,9 +306,14 @@ void
 page_fault_handler(struct Trapframe *tf)
 {
 	uint32_t fault_va;
+    struct PageInfo *pp;
+    void *uxstacktop;
+    uint32_t esp_tmp;
+    struct UTrapframe utp;
 
 	// Read processor's CR2 register to find the faulting address
 	fault_va = rcr2();
+    //cprintf("fault va is %p\n", fault_va);
 
 	// Handle kernel-mode page faults.
 
@@ -348,9 +354,46 @@ page_fault_handler(struct Trapframe *tf)
 	// LAB 4: Your code here.
 
 	// Destroy the environment that caused the fault.
-	cprintf("[%08x] user fault va %08x ip %08x\n",
-		curenv->env_id, fault_va, tf->tf_eip);
-	print_trapframe(tf);
-	env_destroy(curenv);
+    if (!curenv->env_pgfault_upcall)
+    {
+        cprintf("[%08x] user fault va %08x ip %08x\n",
+            curenv->env_id, fault_va, tf->tf_eip);
+        print_trapframe(tf);
+        env_destroy(curenv);
+    }
+    
+    /* save registers and build frame */
+    utp.utf_esp = tf->tf_esp;
+    utp.utf_eflags = tf->tf_eflags;
+    utp.utf_eip = tf->tf_eip;
+    utp.utf_regs = tf->tf_regs;
+    utp.utf_err = tf->tf_err;
+    utp.utf_fault_va = fault_va;
+    cprintf("tf->tf_esp is %p\n", tf->tf_esp);
+
+    if (tf->tf_esp >= (UXSTACKTOP - PGSIZE) && tf->tf_esp <= UXSTACKTOP -1)
+    {
+        // recursive page fault
+        tf->tf_esp -= 4;
+    }
+    else
+    {
+        tf->tf_esp = UXSTACKTOP;
+    }
+    
+    //TODO va check
+    user_mem_assert(curenv, (void*)(UXSTACKTOP - PGSIZE), PGSIZE, PTE_U | PTE_W);
+    if (!(pp = page_lookup(curenv->env_pgdir, (void*)(UXSTACKTOP - PGSIZE), NULL)))
+        panic("UXSTACKTOP is not mapped!");
+    uxstacktop = page2kva(pp) + PGSIZE + (tf->tf_esp - UXSTACKTOP);
+    
+    /* save registers and build UTrapframe */
+    memmove(uxstacktop - sizeof(struct UTrapframe), &utp, sizeof(struct UTrapframe));
+    //cprintf("utp.utf_eip is %p\n", tf->tf_eip);
+    tf->tf_esp -= sizeof(struct UTrapframe);
+    //cprintf("tf->tf_esp is %p\n", tf->tf_esp);
+    //cprintf("env_pgfault_upcall is %p\n", curenv->env_pgfault_upcall);
+    tf->tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
+    env_run(curenv);
 }
 
