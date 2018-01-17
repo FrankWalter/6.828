@@ -137,10 +137,12 @@ sys_env_set_pgfault_upcall(envid_t envid, void *func)
 	// LAB 4: Your code here.
     struct Env *env;
     int ret;
-
+    
+    cprintf("[%08x]: set env_pgfault_upcall = %p\n", envid, func);
     if ((ret = envid2env(envid, &env, 1)) < 0)
         return ret;
 	env->env_pgfault_upcall = func;
+    
     return 0;
 }
 
@@ -175,6 +177,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
     struct Env *env;
     int ret;
 
+    cprintf("envid is %d, va is %p\n", envid, va);
     if ((uint32_t)va >= UTOP || (uint32_t)va % PGSIZE != 0)
         return -E_INVAL;
     if (((perm | PTE_SYSCALL) != PTE_SYSCALL) || !(perm & PTE_U) || !(perm & PTE_P))
@@ -185,7 +188,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
         return -E_NO_MEM;
 //    if (page_lookup(env->env_pgdir, va, NULL) == pp)
 //        page_remove(env->env_pgdir, va);
-    //cprintf("envid is %d, env is %p, va is %p\n", envid, env, va);
+    cprintf("envid is %d, env is %p, va is %p\n", envid, env, va);
     return page_insert(env->env_pgdir, pp, va, perm);
 }
 
@@ -237,7 +240,7 @@ sys_page_map(envid_t srcenvid, void *srcva,
         return -E_INVAL;
     if (!(*pte & PTE_W) && (perm & PTE_W))
         return -E_INVAL;
-
+    //cprintf("sys_page_map: srcenvid %d, dstenvid %d, dstva %p\n", srcenvid, dstenvid, dstva);
     return page_insert(dstenv->env_pgdir, pp, dstva, perm);
 }
 

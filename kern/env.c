@@ -241,7 +241,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 
 	// Set up appropriate initial values for the segment registers.
 	// GD_UD is the user data segment selector in the GDT, and
-	// GD_UT is the user text segment selector (see inc/memlayout.h).
+	// GD_UT is the user texUSTACKTOPt segment selector (see inc/memlayout.h).
 	// The low 2 bits of each segment register contains the
 	// Requestor Privilege Level (RPL); 3 means user mode.  When
 	// we switch privilege levels, the hardware does various
@@ -296,7 +296,8 @@ region_alloc(struct Env *e, void *va, size_t len)
 		{
 			panic("region_alloc: out of memory \n");
 		}
-		page_insert(e->env_pgdir, p, iter, PTE_U | PTE_W);
+        //cprintf("region_alloc: env is %d, va is %p\n", e->env_id, va);
+		page_insert(e->env_pgdir, p, iter, PTE_U|PTE_W);
 	}
 
 }
@@ -531,6 +532,7 @@ env_run(struct Env *e)
 	//	e->env_tf to sensible values.
 
 	// LAB 3: Your code here.
+    //cprintf("env_run: begin to run %d\n", e->env_id);
     if (curenv != e)
 	{
 
@@ -542,6 +544,8 @@ env_run(struct Env *e)
 		curenv->env_status = ENV_RUNNING;
 		curenv->env_runs++;
 		lcr3(PADDR(curenv->env_pgdir));
+        cprintf("[%08x] instruction at %p\n", e->env_id, e->env_tf.tf_eip);
+        cprintf("[%08x] instruction is %x\n", e->env_id, *((uint8_t *)(e->env_tf.tf_eip)));
 	}
     unlock_kernel();
 	env_pop_tf(&(e->env_tf));

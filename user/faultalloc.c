@@ -7,7 +7,6 @@ handler(struct UTrapframe *utf)
 {
 	int r;
 	void *addr = (void*)utf->utf_fault_va;
-    cprintf("handler: esp is %p, eip is %p\n", utf->utf_esp, utf->utf_eip);
 
 	cprintf("fault %x\n", addr);
 	if ((r = sys_page_alloc(0, ROUNDDOWN(addr, PGSIZE),
