@@ -314,15 +314,12 @@ TRAPHANDLER_NOEC(vector255, 255)
  _alltraps:
 	pushl %ds
 	pushl %es 	
-	#pushl %fs
-	#pushl %gs
 	pushal
 	movw $(GD_KD), %ax
 	movw %ax, %ds
 	movw %ax, %es
 	pushl %esp
 	call trap
-	#addl $4, %esp
 
 #vector table
 .data

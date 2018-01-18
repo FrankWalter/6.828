@@ -39,6 +39,7 @@ sys_cgetc(void)
 static envid_t
 sys_getenvid(void)
 {
+    //cprintf("sys_getenvid: envid is %08x, parent is %08x\n", curenv->env_id, curenv->env_parent_id);
 	return curenv->env_id;
 }
 

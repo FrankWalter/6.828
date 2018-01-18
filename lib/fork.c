@@ -25,7 +25,7 @@ pgfault(struct UTrapframe *utf)
 	//   (see <inc/memlayout.h>).
 
 	// LAB 4: Your code here.
-    //cprintf("err is %x\n", err);
+    //cprintf("%08x utf_fault_va is %p\n", sys_getenvid(), addr);
     if (!(err & FEC_WR))
         panic("faulting access was not a write!");
     if (!(uvpt[PGNUM(addr)] & PTE_COW))
@@ -42,6 +42,8 @@ pgfault(struct UTrapframe *utf)
         panic("fail to alloc new page in page fault handler: %e", r);
     memmove(UTEMP, ROUNDDOWN(addr, PGSIZE), PGSIZE);
     
+    if ((r = sys_page_unmap(0, ROUNDDOWN(addr, PGSIZE))) < 0)
+		panic("sys_page_unmap: %e", r);
     if ((r = sys_page_map(0, UTEMP, 0, ROUNDDOWN(addr, PGSIZE), PTE_P|PTE_U|PTE_W)) < 0)
 		panic("sys_page_map: %e", r);
 	if ((r = sys_page_unmap(0, UTEMP)) < 0)
@@ -65,14 +67,15 @@ duppage(envid_t envid, unsigned pn)
 	int r;
 
 	// LAB 4: Your code here.
-    cprintf("addr is %p\n", (void*)(pn * PGSIZE));
+    //cprintf("addr is %p\n", (void*)(pn * PGSIZE));
     pte_t p = uvpt[pn];
     if(p & PTE_W || p & PTE_COW)
     {
         if ((r = sys_page_map(0, (void*)(pn * PGSIZE), envid, (void*)(pn * PGSIZE), PTE_P|PTE_U|PTE_COW)) < 0)
             panic("sys_page_map: %e", r);
         if ((r = sys_page_map(0, (void*)(pn * PGSIZE), 0, (void*)(pn * PGSIZE), PTE_P|PTE_U|PTE_COW)) < 0)
-            panic("sys_page_map(remap): %e", r);       
+            panic("sys_page_map(remap): %e", r);             
+     
     }
     else
     {

@@ -80,15 +80,19 @@ trap_init(void)
 	{
         if (i == T_BRKPT)
         {
-            SETGATE(idt[i], 1, GD_KT, vectors[i], 3);
+            SETGATE(idt[i], 0, GD_KT, vectors[i], 3);
         }
         else if (i == T_SYSCALL)
         {
             SETGATE(idt[i], 0, GD_KT, vectors[i], 3);
         }
+        else if (i >= IRQ_OFFSET && i < IRQ_OFFSET + MAX_IRQS)
+        {
+            SETGATE(idt[i], 0, GD_KT, vectors[i], 3);
+        }
 		else 
         {
-            SETGATE(idt[i], 1, GD_KT, vectors[i], 0);
+            SETGATE(idt[i], 0, GD_KT, vectors[i], 0);
         }
 	}
 
@@ -223,7 +227,11 @@ trap_dispatch(struct Trapframe *tf)
 
         // Handle clock interrupts. Don't forget to acknowledge the
         // interrupt using lapic_eoi() before calling the scheduler!
-        // LAB 4: Your code here.    
+        // LAB 4: Your code here.
+        case IRQ_OFFSET + IRQ_TIMER:
+            lapic_eoi();
+            sched_yield();
+            break;
         default:
             goto error;
     }
@@ -259,7 +267,9 @@ trap(struct Trapframe *tf)
 	// Check that interrupts are disabled.  If this assertion
 	// fails, DO NOT be tempted to fix it by inserting a "cli" in
 	// the interrupt path.
+    //print_trapframe(tf);
 	assert(!(read_eflags() & FL_IF));
+
 
 	if ((tf->tf_cs & 3) == 3) {
 		// Trapped from user mode.
@@ -290,7 +300,6 @@ trap(struct Trapframe *tf)
 
 	// Dispatch based on what type of trap occurred
 	trap_dispatch(tf);
-    //cprintf("end of trap\n");
 
 	// If we made it to this point, then no other environment was
 	// scheduled, so we should return to the current environment
@@ -314,6 +323,7 @@ page_fault_handler(struct Trapframe *tf)
 	// Read processor's CR2 register to find the faulting address
 	fault_va = rcr2();
     cprintf("[%08x] user fault va %08x ip %08x\n", curenv->env_id, fault_va, tf->tf_eip);
+    //print_trapframe(tf);
 	// Handle kernel-mode page faults.
 
 	// LAB 3: Your code here.
