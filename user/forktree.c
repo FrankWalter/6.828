@@ -2,7 +2,7 @@
 
 #include <inc/lib.h>
 
-#define DEPTH 1
+#define DEPTH 3
 
 void forktree(const char *cur);
 
@@ -27,7 +27,7 @@ forktree(const char *cur)
 	cprintf("%04x: I am '%s'\n", sys_getenvid(), cur);
 
 	forkchild(cur, '0');
-	//forkchild(cur, '1');
+	forkchild(cur, '1');
 }
 
 void

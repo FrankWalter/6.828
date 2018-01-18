@@ -544,8 +544,8 @@ env_run(struct Env *e)
 		curenv->env_status = ENV_RUNNING;
 		curenv->env_runs++;
 		lcr3(PADDR(curenv->env_pgdir));
-        cprintf("[%08x] instruction at %p\n", e->env_id, e->env_tf.tf_eip);
-        cprintf("[%08x] instruction is %x\n", e->env_id, *((uint8_t *)(e->env_tf.tf_eip)));
+        //cprintf("[%08x] instruction at %p\n", e->env_id, e->env_tf.tf_eip);
+        //cprintf("[%08x] instruction is %x\n", e->env_id, *((uint8_t *)(e->env_tf.tf_eip)));
 	}
     unlock_kernel();
 	env_pop_tf(&(e->env_tf));

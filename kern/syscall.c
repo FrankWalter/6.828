@@ -138,7 +138,7 @@ sys_env_set_pgfault_upcall(envid_t envid, void *func)
     struct Env *env;
     int ret;
     
-    cprintf("[%08x]: set env_pgfault_upcall = %p\n", envid, func);
+    cprintf("[%08x] set env_pgfault_upcall = %p\n", envid, func);
     if ((ret = envid2env(envid, &env, 1)) < 0)
         return ret;
 	env->env_pgfault_upcall = func;
@@ -177,7 +177,7 @@ sys_page_alloc(envid_t envid, void *va, int perm)
     struct Env *env;
     int ret;
 
-    cprintf("envid is %d, va is %p\n", envid, va);
+    //cprintf("envid is %d, va is %p\n", envid, va);
     if ((uint32_t)va >= UTOP || (uint32_t)va % PGSIZE != 0)
         return -E_INVAL;
     if (((perm | PTE_SYSCALL) != PTE_SYSCALL) || !(perm & PTE_U) || !(perm & PTE_P))
@@ -186,9 +186,6 @@ sys_page_alloc(envid_t envid, void *va, int perm)
         return ret;
     if (!(pp = page_alloc(ALLOC_ZERO)))
         return -E_NO_MEM;
-//    if (page_lookup(env->env_pgdir, va, NULL) == pp)
-//        page_remove(env->env_pgdir, va);
-    cprintf("envid is %d, env is %p, va is %p\n", envid, env, va);
     return page_insert(env->env_pgdir, pp, va, perm);
 }
 

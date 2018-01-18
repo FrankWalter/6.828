@@ -355,7 +355,7 @@ page_fault_handler(struct Trapframe *tf)
 	// Destroy the environment that caused the fault.
     if (!curenv->env_pgfault_upcall)
     {
-        cprintf("env_pgfault_upcall not set!\n");
+        cprintf("[%08x] user fault va %08x ip %08x\n", curenv->env_id, fault_va, tf->tf_eip);
         print_trapframe(tf);
         env_destroy(curenv);
     }
@@ -379,7 +379,7 @@ page_fault_handler(struct Trapframe *tf)
     }
     
     //TODO va check
-    user_mem_assert(curenv, (void*)(UXSTACKTOP - PGSIZE), PGSIZE, PTE_U | PTE_W);
+    user_mem_assert(curenv, (void*)(tf->tf_esp - sizeof(struct UTrapframe)), sizeof(struct UTrapframe), PTE_U | PTE_W);
     if (!(pp = page_lookup(curenv->env_pgdir, (void*)(UXSTACKTOP - PGSIZE), NULL)))
         panic("UXSTACKTOP is not mapped!");
     uxstacktop = page2kva(pp) + PGSIZE + (tf->tf_esp - UXSTACKTOP);

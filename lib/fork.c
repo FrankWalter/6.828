@@ -17,8 +17,7 @@ pgfault(struct UTrapframe *utf)
 	void *addr = (void *) utf->utf_fault_va;
 	uint32_t err = utf->utf_err;
 	int r;
-    
-    thisenv = &envs[ENVX(sys_getenvid())];
+
 	// Check that the faulting access was (1) a write, and (2) to a
 	// copy-on-write page.  If not, panic.
 	// Hint:
@@ -26,7 +25,7 @@ pgfault(struct UTrapframe *utf)
 	//   (see <inc/memlayout.h>).
 
 	// LAB 4: Your code here.
-    cprintf("err is %x\n", err);
+    //cprintf("err is %x\n", err);
     if (!(err & FEC_WR))
         panic("faulting access was not a write!");
     if (!(uvpt[PGNUM(addr)] & PTE_COW))
@@ -39,7 +38,7 @@ pgfault(struct UTrapframe *utf)
 	//   You should make three system calls.
 
 	// LAB 4: Your code here.
-    if ((r = sys_page_alloc(thisenv->env_id, UTEMP, PTE_P|PTE_U|PTE_W)) < 0)
+    if ((r = sys_page_alloc(sys_getenvid(), UTEMP, PTE_P|PTE_U|PTE_W)) < 0)
         panic("fail to alloc new page in page fault handler: %e", r);
     memmove(UTEMP, ROUNDDOWN(addr, PGSIZE), PGSIZE);
     
@@ -66,7 +65,7 @@ duppage(envid_t envid, unsigned pn)
 	int r;
 
 	// LAB 4: Your code here.
-    //cprintf("addr is %p\n", (void*)(pn * PGSIZE));
+    cprintf("addr is %p\n", (void*)(pn * PGSIZE));
     pte_t p = uvpt[pn];
     if(p & PTE_W || p & PTE_COW)
     {
