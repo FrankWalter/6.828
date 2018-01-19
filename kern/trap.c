@@ -322,7 +322,7 @@ page_fault_handler(struct Trapframe *tf)
 
 	// Read processor's CR2 register to find the faulting address
 	fault_va = rcr2();
-    cprintf("[%08x] user fault va %08x ip %08x\n", curenv->env_id, fault_va, tf->tf_eip);
+    //cprintf("[%08x] user fault va %08x ip %08x\n", curenv->env_id, fault_va, tf->tf_eip);
     //print_trapframe(tf);
 	// Handle kernel-mode page faults.
 

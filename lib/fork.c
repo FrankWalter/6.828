@@ -129,7 +129,7 @@ fork(void)
             panic("sys_env_set_pgfault_upcall: %e", r);
 
         addr = USTACKTOP;
-        while (true)
+        while (1)
         {
             addr -= PGSIZE;
             pde_t d = uvpd[PDX(addr)];
