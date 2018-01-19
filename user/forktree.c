@@ -24,6 +24,7 @@ forkchild(const char *cur, char branch)
 void
 forktree(const char *cur)
 {
+    cprintf("cur addr is %p\n", cur);
 	cprintf("%04x: I am '%s'\n", sys_getenvid(), cur);
 
 	forkchild(cur, '0');
