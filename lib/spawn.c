@@ -106,6 +106,7 @@ spawn(const char *prog, const char **argv)
 	// Set up trap frame, including initial stack.
 	child_tf = envs[ENVX(child)].env_tf;
 	child_tf.tf_eip = elf->e_entry;
+    cprintf("child_tf.tf_eip is %p\n", child_tf.tf_eip);
 
 	if ((r = init_stack(child, argv, &child_tf.tf_esp)) < 0)
 		return r;
@@ -134,7 +135,6 @@ spawn(const char *prog, const char **argv)
 
 	if ((r = sys_env_set_status(child, ENV_RUNNABLE)) < 0)
 		panic("sys_env_set_status: %e", r);
-
 	return child;
 
 error:
