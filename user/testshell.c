@@ -36,13 +36,13 @@ umain(int argc, char **argv)
 		wait(r);
 		exit();
 	}
+    
 	close(rfd);
 	close(wfd);
 
 	rfd = pfds[0];
 	if ((kfd = open("testshell.key", O_RDONLY)) < 0)
 		panic("open testshell.key for reading: %e", kfd);
-
 	nloff = 0;
 	for (off=0;; off++) {
 		n1 = read(rfd, &c1, 1);
@@ -53,8 +53,12 @@ umain(int argc, char **argv)
 			panic("reading testshell.key: %e", n2);
 		if (n1 == 0 && n2 == 0)
 			break;
+        cprintf("%c", c1);
 		if (n1 != 1 || n2 != 1 || c1 != c2)
+        {
+            cprintf("n1 is %d, n2 is %d, c1 is %c, c2 is %c\n", n1, n2, c1, c2);
 			wrong(rfd, kfd, nloff);
+        }
 		if (c1 == '\n')
 			nloff = off+1;
 	}
