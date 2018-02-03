@@ -197,6 +197,7 @@ trap_dispatch(struct Trapframe *tf)
 {
     struct PushRegs* tf_regs;
     int32_t result;
+    unsigned int counter = 0;
     //print_trapframe(tf);
     switch(tf->tf_trapno) {
         case T_PGFLT:
@@ -228,7 +229,11 @@ trap_dispatch(struct Trapframe *tf)
         // LAB 4: Your code here.
         case IRQ_OFFSET + IRQ_TIMER:
             lapic_eoi();
-            sched_yield();
+            if (++counter >= 100)
+            {
+                counter = 0;
+                sched_yield();
+            }
             break;
         
         // Handle keyboard and serial interrupts.

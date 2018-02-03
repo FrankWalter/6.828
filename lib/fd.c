@@ -294,6 +294,7 @@ fstat(int fdnum, struct Stat *stat)
 	int r;
 	struct Dev *dev;
 	struct Fd *fd;
+    fd_lookup(fdnum, &fd);
 
 	if ((r = fd_lookup(fdnum, &fd)) < 0
 	    || (r = dev_lookup(fd->fd_dev_id, &dev)) < 0)

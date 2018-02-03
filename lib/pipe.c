@@ -1,6 +1,6 @@
 #include <inc/lib.h>
 
-#define debug 1
+#define debug 0
 
 static ssize_t devpipe_read(struct Fd *fd, void *buf, size_t n);
 static ssize_t devpipe_write(struct Fd *fd, const void *buf, size_t n);
@@ -55,11 +55,13 @@ pipe(int pfd[2])
 	fd1->fd_dev_id = devpipe.dev_id;
 	fd1->fd_omode = O_WRONLY;
 
-	if (debug)
-		cprintf("[%08x] pipecreate %08x\n", thisenv->env_id, uvpt[PGNUM(va)]);
-
+//	if (1)
+//		cprintf("[%08x] pipecreate %p\n", thisenv->env_id, fd0);
+//    cprintf("[%08x] pipecreate %p\n", thisenv->env_id, fd1);
+    //cprintf("[%08x] pipecreate %08x\n", thisenv->env_id, uvpt[PGNUM(va)]);
 	pfd[0] = fd2num(fd0);
 	pfd[1] = fd2num(fd1);
+    //cprintf("create pfd[0] is %d, pfd[1] is %d\n", pfd[0], pfd[1]);
 	return 0;
 
     err3:
@@ -144,7 +146,7 @@ devpipe_write(struct Fd *fd, const void *vbuf, size_t n)
 	struct Pipe *p;
 
 	p = (struct Pipe*) fd2data(fd);
-	if (debug)
+    if (debug)
 		cprintf("[%08x] devpipe_write %08x %d rpos %d wpos %d\n",
 			thisenv->env_id, uvpt[PGNUM(p)], n, p->p_rpos, p->p_wpos);
 
@@ -175,16 +177,23 @@ static int
 devpipe_stat(struct Fd *fd, struct Stat *stat)
 {
 	struct Pipe *p = (struct Pipe*) fd2data(fd);
+    stat->st_size = p->p_wpos - p->p_rpos;
 	strcpy(stat->st_name, "<pipe>");
-	stat->st_size = p->p_wpos - p->p_rpos;
+    //cprintf("\nfd %d p->p_wpos is %d, p->p_rpos is %d\n", fd2num(fd), p->p_wpos, p->p_rpos);
+//	
+//    cprintf("\nfd %d p->p_wpos is %d, p->p_rpos is %d\n", fd2num(fd), p->p_wpos, p->p_rpos);
+//    cprintf("\nfd %p stat->st_size %d\n", fd, stat->st_size);
+    //stat->st_size = 32;
 	stat->st_isdir = 0;
 	stat->st_dev = &devpipe;
+    //cprintf("\nfd0->fd_dev_id is %c, va is %p\n", fd->fd_dev_id, fd);
 	return 0;
 }
 
 static int
 devpipe_close(struct Fd *fd)
 {
+    //cprintf("[%08x] devpipe_close %p\n", thisenv->env_id, fd);
 	(void) sys_page_unmap(0, fd);
 	return sys_page_unmap(0, fd2data(fd));
 }
