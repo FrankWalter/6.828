@@ -106,6 +106,7 @@ spawn(const char *prog, const char **argv)
 	// Set up trap frame, including initial stack.
 	child_tf = envs[ENVX(child)].env_tf;
 	child_tf.tf_eip = elf->e_entry;
+    //cprintf("child_tf.tf_eip is %p\n", child_tf.tf_eip);
 
 	if ((r = init_stack(child, argv, &child_tf.tf_esp)) < 0)
 		return r;
@@ -134,7 +135,6 @@ spawn(const char *prog, const char **argv)
 
 	if ((r = sys_env_set_status(child, ENV_RUNNABLE)) < 0)
 		panic("sys_env_set_status: %e", r);
-
 	return child;
 
 error:
@@ -301,6 +301,27 @@ static int
 copy_shared_pages(envid_t child)
 {
 	// LAB 5: Your code here.
-	return 0;
+    uintptr_t addr;
+    int r;
+
+    addr = USTACKTOP;
+    while (1)
+    {
+        addr -= PGSIZE;
+        pde_t d = uvpd[PDX(addr)];
+        if (!(d & PTE_P))
+            continue;
+        pte_t p = uvpt[PGNUM(addr)];
+        if ((p & PTE_P) && (p & PTE_SHARE))
+        {
+            if ((r = sys_page_map(0, (void*)addr, 
+                                  child, (void*)addr,
+                                  p & PTE_SYSCALL)) < 0)
+                panic("sys_page_map: %e", r);
+        }
+        if (addr == 0)
+            break;
+    }
+    return 0;
 }
 

@@ -151,6 +151,8 @@ PORT7	:= $(shell expr $(GDBPORT) + 1)
 PORT80	:= $(shell expr $(GDBPORT) + 2)
 
 QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT)
+#QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img -serial mon:stdio -gdb tcp::$(GDBPORT) -m 1024
+# QEMUOPTS = -hda $(OBJDIR)/kern/kernel.img  -gdb tcp::$(GDBPORT) -vnc :51 -monitor stdio -chardev file,id=seabios,path=/tmp/bios.log -device isa-debugcon,iobase=0x402,chardev=seabios
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
 IMAGES = $(OBJDIR)/kern/kernel.img
 QEMUOPTS += -smp $(CPUS)
