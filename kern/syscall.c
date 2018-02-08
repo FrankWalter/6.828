@@ -12,6 +12,8 @@
 #include <kern/console.h>
 #include <kern/sched.h>
 #include <kern/time.h>
+#include <kern/e1000.h>
+#include <kern/pci.h>
 
 // Print a string to the system console.
 // The string is exactly 'len' characters long.
@@ -401,7 +403,24 @@ static int
 sys_time_msec(void)
 {
 	// LAB 6: Your code here.
-	panic("sys_time_msec not implemented");
+	return time_msec();
+}
+
+static int
+sys_tx_send(uint32_t bus, uint32_t dev, uint32_t func, void *data, size_t len)
+{
+    struct pci_func *pcif;
+    struct PageInfo* pp;
+    
+    user_mem_assert(curenv, data, len, PTE_U | PTE_P);
+    
+    if (len > PGSIZE)
+        return -E_INVAL;
+    if (!(pcif = pci_get_by_bdf(bus, dev, func)))
+        return -E_INVAL;
+    
+    pp = page_lookup(curenv->env_pgdir, data, NULL);
+    return tx_send(pcif, page2kva(pp), len);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
@@ -443,6 +462,10 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
             return sys_ipc_recv((void*)a1);
         case SYS_env_set_trapframe:
             return sys_env_set_trapframe((envid_t)a1, (struct Trapframe*)a2);
+        case SYS_time_msec:
+            return sys_time_msec();
+        case SYS_tx_send:
+            return sys_tx_send((uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (void*)a4, (size_t)a5);
         default:
             return -E_INVAL;
     }

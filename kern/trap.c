@@ -230,6 +230,7 @@ trap_dispatch(struct Trapframe *tf)
         // LAB 4: Your code here.
         case IRQ_OFFSET + IRQ_TIMER:
             lapic_eoi();
+            time_tick();
             if (++counter >= 100)
             {
                 counter = 0;
@@ -255,7 +256,6 @@ trap_dispatch(struct Trapframe *tf)
     return;
 
  error:
->>>>>>> lab5
 	// Unexpected trap: The user process or the kernel has a bug.
 	print_trapframe(tf);
 	if (tf->tf_cs == GD_KT)
@@ -346,7 +346,7 @@ page_fault_handler(struct Trapframe *tf)
 
 	// LAB 3: Your code here.
     if ((tf->tf_cs & 3) == 0)
-        panic("page fault in kernel mode\n");
+        panic("page fault in kernel mode at %p\n", fault_va);
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
 

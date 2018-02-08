@@ -5,6 +5,9 @@
 #include <kern/pcireg.h>
 #include <kern/e1000.h>
 
+static struct pci_bus root_bus;
+static struct pci_func pci_list[MAX_PCI];
+static unsigned int pci_count = 0;
 // Flag to do "lspci" at bootup
 static int pci_show_devs = 1;
 static int pci_show_addrs = 0;
@@ -31,6 +34,7 @@ struct pci_driver pci_attach_class[] = {
 // pci_attach_vendor matches the vendor ID and device ID of a PCI device. key1
 // and key2 should be the vendor ID and device ID respectively
 struct pci_driver pci_attach_vendor[] = {
+    {PCI_VENDOR_ID_INTEL, E1000_DEV_ID_82540EM, &attach_e1000},
 	{ 0, 0, 0 },
 };
 
@@ -88,13 +92,16 @@ pci_attach_match(uint32_t key1, uint32_t key2,
 static int
 pci_attach(struct pci_func *f)
 {
+    if (pci_count >= MAX_PCI)
+        panic("too many pci functions!");
+    pci_list[pci_count++] = *f;
 	return
 		pci_attach_match(PCI_CLASS(f->dev_class),
 				 PCI_SUBCLASS(f->dev_class),
-				 &pci_attach_class[0], f) ||
+				 &pci_attach_class[0], &pci_list[pci_count - 1]) ||
 		pci_attach_match(PCI_VENDOR(f->dev_id),
 				 PCI_PRODUCT(f->dev_id),
-				 &pci_attach_vendor[0], f);
+				 &pci_attach_vendor[0], &pci_list[pci_count - 1]);
 }
 
 static const char *pci_class[] =
@@ -142,6 +149,7 @@ pci_scan_bus(struct pci_bus *bus)
 		     f.func++) {
 			struct pci_func af = f;
 
+            af.bus_num = af.bus->busno;
 			af.dev_id = pci_conf_read(&f, PCI_ID_REG);
 			if (PCI_VENDOR(af.dev_id) == 0xffff)
 				continue;
@@ -247,10 +255,23 @@ pci_func_enable(struct pci_func *f)
 		PCI_VENDOR(f->dev_id), PCI_PRODUCT(f->dev_id));
 }
 
+struct pci_func *pci_get_by_bdf(uint32_t bus, uint32_t dev, uint32_t func)
+{
+    int i;
+    
+    for (i = 0; i < pci_count; i++)
+    {
+        if (pci_list[i].bus_num == bus &&
+            pci_list[i].dev == dev &&
+            pci_list[i].func == func)
+            return &pci_list[i];
+    }
+    
+    return NULL;
+}
 int
 pci_init(void)
 {
-	static struct pci_bus root_bus;
 	memset(&root_bus, 0, sizeof(root_bus));
 
 	return pci_scan_bus(&root_bus);
