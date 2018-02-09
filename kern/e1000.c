@@ -41,7 +41,7 @@ int tx_send(struct pci_func *pcif, void *data, size_t len)
     uint32_t tail;
     volatile struct tx_desc *tail_tx_desc;
    
-    cprintf("enter tx_send, pcif is %p, data is %s, len is %d\n", pcif, data, len); 
+    //cprintf("enter tx_send, pcif is %p, data is %s, len is %d\n", pcif, data, len); 
     if (len > buffer_size)
         return -E_INVAL;
     
@@ -50,6 +50,7 @@ int tx_send(struct pci_func *pcif, void *data, size_t len)
     if (!(pcif->tx_desc_ring[tail].status & E1000_TXD_STAT_DD))
         return -E_TX_FULL;
     memmove(KADDR((physaddr_t)(pcif->tx_desc_ring[tail].addr)), data, len);
+    pcif->tx_desc_ring[tail].length = len;
     pcif->tx_desc_ring[tail].status &= ~E1000_TXD_STAT_DD;
     pci_write_conf_uint32_t(pcif, E1000_TDT, (tail + 1) % tdlen);
 

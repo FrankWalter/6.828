@@ -1,0 +1,12 @@
+
+
+
+Question
+
+    1. How did you structure your transmit implementation? In particular, what do you do if the transmit ring is full?
+    Answer: I use E1000_TXD_CMD_RS and E1000_TXD_STAT_DD to detect whether the transmit ring is full. When the transmit ring is full, the output function in output.c
+    will try to send the same package again, and mean while the core network server will block.
+
+
+
+

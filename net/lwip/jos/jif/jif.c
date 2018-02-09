@@ -80,6 +80,7 @@ low_level_init(struct netif *netif)
 static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
+    cprintf("enter low_level_output\n");
     int r = sys_page_alloc(0, (void *)PKTMAP, PTE_U|PTE_W|PTE_P);
     if (r < 0)
 	panic("jif: could not allocate page of memory");

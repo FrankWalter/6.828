@@ -369,7 +369,6 @@ sys_ipc_try_send(envid_t envid, uint32_t value, void *srcva, unsigned perm)
         target_env->env_ipc_perm = 0;
     target_env->env_status = ENV_RUNNABLE;
     target_env->env_tf.tf_regs.reg_eax = 0;
-    //env_run(target_env);
     return 0;
 }
 
@@ -420,7 +419,7 @@ sys_tx_send(uint32_t bus, uint32_t dev, uint32_t func, void *data, size_t len)
         return -E_INVAL;
     
     pp = page_lookup(curenv->env_pgdir, data, NULL);
-    return tx_send(pcif, page2kva(pp), len);
+    return tx_send(pcif, page2kva(pp) + (data - ROUNDDOWN(data, PGSIZE)), len);
 }
 
 // Dispatches to the correct kernel function, passing the arguments.
