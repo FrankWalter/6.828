@@ -6,6 +6,8 @@
 #include <inc/error.h>
 #define PCI_VENDOR_ID_INTEL              0x8086
 #define E1000_DEV_ID_82540EM             0x100E
+#define MAC_LOW 0x12005452
+#define MAC_HIGH 0x80005634
 
 /* e1000 registers (refer to qemu/e1000_hw.h) */
 #define E1000_STATUS   0x00008  /* Device Status - RO */
@@ -48,8 +50,22 @@
 
 #define E1000_TIPG     0x00410  /* TX Inter-packet gap -RW */
 
+/* receive related registers*/
+#define E1000_RCTL     0x00100  /* RX Control - RW */
+#define E1000_RDBAL    0x02800  /* RX Descriptor Base Address Low - RW */
+#define E1000_RDBAH    0x02804  /* RX Descriptor Base Address High - RW */
+#define E1000_RDLEN    0x02808  /* RX Descriptor Length - RW */
+#define E1000_RDH      0x02810  /* RX Descriptor Head - RW */
+#define E1000_RDT      0x02818  /* RX Descriptor Tail - RW */
+
+#define E1000_MTA      0x05200  /* Multicast Table Array - RW Array */
+#define E1000_RAL       0x05400  /* Receive Address LOW - RW Array */
+#define E1000_RAH       0x05404  /* Receive Address HIGH - RW Array */
+
+
+
 /* definitions for e1000 related structures*/
-struct tx_desc
+struct e1000_tx_desc
 {
 	uint64_t addr;
 	uint16_t length;
@@ -60,6 +76,15 @@ struct tx_desc
 	uint16_t special;
 };
 
-void tx_init(struct pci_func *pcif);
+struct e1000_rx_desc {
+    uint64_t addr; /* Address of the descriptor's data buffer */
+    uint16_t length;     /* Length of data DMAed into data buffer */
+    uint16_t csum;       /* Packet checksum */
+    uint8_t status;      /* Descriptor status */
+    uint8_t errors;      /* Descriptor Errors */
+    uint16_t special;
+};
+
 int tx_send(struct pci_func *pcif, void* data, size_t len);
+int rx_receive(struct pci_func *pcif, void *data, size_t len);
 int attach_e1000(struct pci_func *pcif);

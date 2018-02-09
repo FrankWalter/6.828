@@ -24,7 +24,8 @@ struct pci_func {
     uint8_t irq_line;
     
     volatile char *mmio;
-    volatile struct tx_desc *tx_desc_ring;
+    volatile struct e1000_tx_desc *tx_desc_ring;
+    volatile struct e1000_rx_desc *rx_desc_ring;
 };
 
 struct pci_bus {

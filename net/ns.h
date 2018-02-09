@@ -4,6 +4,7 @@
 #define IP "10.0.2.15"
 #define MASK "255.255.255.0"
 #define DEFAULT "10.0.2.2"
+
 #define E1000_DEFAULT_BUS 0
 #define E1000_DEFAULT_DEV 0x3
 #define E1000_DEFAULT_FUN 0
