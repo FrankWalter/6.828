@@ -422,6 +422,19 @@ sys_tx_send(uint32_t bus, uint32_t dev, uint32_t func, void *data, size_t len)
     return tx_send(pcif, page2kva(pp) + (data - ROUNDDOWN(data, PGSIZE)), len);
 }
 
+static int
+sys_rx_receive(uint32_t bus, uint32_t dev, uint32_t func, void *data)
+{
+    struct pci_func *pcif;
+    struct PageInfo* pp;
+    
+    if (!(pcif = pci_get_by_bdf(bus, dev, func)))
+        return -E_INVAL;
+    
+    pp = page_lookup(curenv->env_pgdir, data, NULL);
+    return rx_receive(pcif, page2kva(pp) + (data - ROUNDDOWN(data, PGSIZE)));
+}
+
 // Dispatches to the correct kernel function, passing the arguments.
 int32_t
 syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, uint32_t a5)
@@ -465,6 +478,8 @@ syscall(uint32_t syscallno, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4, 
             return sys_time_msec();
         case SYS_tx_send:
             return sys_tx_send((uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (void*)a4, (size_t)a5);
+        case SYS_rx_receive:
+            return sys_rx_receive((uint32_t)a1, (uint32_t)a2, (uint32_t)a3, (void*)a4);
         default:
             return -E_INVAL;
     }

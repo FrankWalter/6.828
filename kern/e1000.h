@@ -62,6 +62,10 @@
 #define E1000_RAL       0x05400  /* Receive Address LOW - RW Array */
 #define E1000_RAH       0x05404  /* Receive Address HIGH - RW Array */
 
+/* Receive Descriptor bit definitions */
+#define E1000_RXD_STAT_DD       0x01    /* Descriptor Done */
+#define E1000_RXD_STAT_EOP      0x02    /* End of Packet */
+
 
 
 /* definitions for e1000 related structures*/
@@ -86,5 +90,5 @@ struct e1000_rx_desc {
 };
 
 int tx_send(struct pci_func *pcif, void* data, size_t len);
-int rx_receive(struct pci_func *pcif, void *data, size_t len);
+int rx_receive(struct pci_func *pcif, void *data);
 int attach_e1000(struct pci_func *pcif);

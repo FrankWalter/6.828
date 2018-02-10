@@ -61,7 +61,6 @@ ipc_send(envid_t to_env, uint32_t val, void *pg, int perm)
         if (!pg)
             pg = (void*)UTOP;
         ret = sys_ipc_try_send(to_env, val, pg, perm);
-        //cprintf("ret is %d\n", ret);
         if (ret == 0)
             break;
         if (ret < 0 && ret != -E_IPC_NOT_RECV)

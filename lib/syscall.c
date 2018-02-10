@@ -128,3 +128,9 @@ sys_tx_send(uint32_t bus, uint32_t dev, uint32_t func, void *data, size_t len)
 {
     return syscall(SYS_tx_send, 1, bus, dev, func, (uint32_t)data, (uint32_t)len);
 }
+
+int
+sys_rx_receive(uint32_t bus, uint32_t dev, uint32_t func, void *data)
+{
+    return syscall(SYS_rx_receive, 0, bus, dev, func, (uint32_t)data, 0);
+}
