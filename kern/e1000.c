@@ -6,11 +6,10 @@
 const uint32_t e1000_tctl_default = 0x4010a;
 const uint32_t e1000_tipg_default = 0x60100a;
 const unsigned int buffer_size = 2048;
-const unsigned int tdlen = 16;
+const unsigned int tdlen = 128;
 
 const uint32_t e1000_rctl_default = 0x4000022;
-const unsigned int rdlen = 16;
-int rx_index;
+const unsigned int rdlen = 128;
 
 static void tx_init(struct pci_func *pcif)
 {
@@ -61,8 +60,7 @@ static void rx_init(struct pci_func *pcif)
     pci_write_conf_uint32_t(pcif, E1000_RDBAH, 0);
     pci_write_conf_uint32_t(pcif, E1000_RDLEN, rdlen * sizeof(struct e1000_rx_desc));
     pci_write_conf_uint32_t(pcif, E1000_RDH, 1);
-    pci_write_conf_uint32_t(pcif, E1000_RDT, 0);
-    rx_index = 0;
+    pci_write_conf_uint32_t(pcif, E1000_RDT, rdlen);
     
     for (i = 0; i < rdlen; i++)
     {
@@ -99,11 +97,14 @@ int rx_receive(struct pci_func *pcif, void *data)
 {   
     uint32_t new_tail;
     new_tail = (pci_read_conf_uint32_t(pcif, E1000_RDT) + 1) % rdlen;
-
+//    cprintf("head is %d, tail is %d\n", 
+//            pci_read_conf_uint32_t(pcif, E1000_RDH), 
+//            pci_read_conf_uint32_t(pcif, E1000_RDT));
     if (!(pcif->rx_desc_ring[new_tail].status & E1000_RXD_STAT_DD))
         return -E_RX_EMPTY;
     memmove(data, KADDR((physaddr_t)(pcif->rx_desc_ring[new_tail].addr)), pcif->rx_desc_ring[new_tail].length);
     pci_write_conf_uint32_t(pcif, E1000_RDT, new_tail);
+    pcif->rx_desc_ring[new_tail].status = 0;
     return pcif->rx_desc_ring[new_tail].length;
 }
 
@@ -117,9 +118,5 @@ int attach_e1000(struct pci_func *pcif)
     tx_init(pcif);
     rx_init(pcif);
     
-    /* test */
-//    char test[] = "hello, world!";
-//    if ((r = tx_send(pcif, test, sizeof(test))) < 0)
-//        cprintf("tx_send error: %e\n", r);
     return 0;
 }
