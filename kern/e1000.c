@@ -104,8 +104,8 @@ int rx_receive(struct pci_func *pcif, void *data)
         return -E_RX_EMPTY;
     }
     memmove(data, KADDR((physaddr_t)(pcif->rx_desc_ring[new_tail].addr)), pcif->rx_desc_ring[new_tail].length);
-    pci_write_conf_uint32_t(pcif, E1000_RDT, new_tail);
     pcif->rx_desc_ring[new_tail].status = 0;
+    pci_write_conf_uint32_t(pcif, E1000_RDT, new_tail);
     return pcif->rx_desc_ring[new_tail].length;
 }
 

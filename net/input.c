@@ -16,6 +16,8 @@ input(envid_t ns_envid)
     int32_t reqno;
 	uint32_t whom;
 	int perm;
+    uint32_t start;
+    uint32_t end;
     
     cprintf("envid in input is [%08x]\n", ns_envid);
     while(1)
@@ -25,6 +27,8 @@ input(envid_t ns_envid)
                                                      E1000_DEFAULT_FUN, 
                                                      nsipcbuf.pkt.jp_data)) < 0);
         ipc_send(ns_envid, NSREQ_INPUT, &nsipcbuf, PTE_P|PTE_W|PTE_U);
-        sys_yield();
+        start = sys_time_msec();
+        while(sys_time_msec() - start < 100)
+            sys_yield();
     }
 }

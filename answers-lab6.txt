@@ -7,6 +7,20 @@ Question
     Answer: I use E1000_TXD_CMD_RS and E1000_TXD_STAT_DD to detect whether the transmit ring is full. When the transmit ring is full, the output function in output.c
     will try to send the same package again, and mean while the core network server will block.
 
+    2. How did you structure your receive implementation? In particular, what do you do if the receive queue is empty and a user environment requests the next incoming packet?
+    Answer: The same method as question 1.
+
+    3. What does the web page served by JOS's web server say?
+    Answer: 
+    "This file came from JOS."
+    "Cheesy web page!"
+
+    4. How long approximately did it take you to do this lab?
+    Answer: About two weeks.
+
+
+
+
 
 
 
