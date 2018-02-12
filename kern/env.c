@@ -268,7 +268,7 @@ env_alloc(struct Env **newenv_store, envid_t parent_id)
 	env_free_list = e->env_link;
 	*newenv_store = e;
 
-	//cprintf("[%08x] new env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+	cprintf("[%08x] new env %08x of type %d\n", curenv ? curenv->env_id : 0, e->env_id, e->env_type);
 	return 0;
 }
 
@@ -410,6 +410,7 @@ env_create(uint8_t *binary, enum EnvType type)
     {
         new_env->env_tf.tf_eflags |= FL_IOPL_3;
     }
+    cprintf("env_create [%08x] of type %d\n", new_env->env_id, new_env->env_type);
 }
 
 //
@@ -539,7 +540,7 @@ env_run(struct Env *e)
 	//	e->env_tf to sensible values.
 
 	// LAB 3: Your code here.
-    //cprintf("env_run: begin to run %d\n", e->env_id);
+    
     if (curenv != e)
 	{
 
@@ -551,10 +552,10 @@ env_run(struct Env *e)
 		curenv->env_status = ENV_RUNNING;
 		curenv->env_runs++;
 		lcr3(PADDR(curenv->env_pgdir));
-        //cprintf("[%08x] instruction at %p\n", e->env_id, e->env_tf.tf_eip);
-        //cprintf("[%08x] instruction is %x\n", e->env_id, *((uint8_t *)(e->env_tf.tf_eip)));
 	}
     unlock_kernel();
+    //if (e->env_id == 0x1005)
+    //cprintf("[%08x]: begin to run \n", e->env_id);
 	env_pop_tf(&(e->env_tf));
 }
 

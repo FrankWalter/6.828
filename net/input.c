@@ -17,6 +17,7 @@ input(envid_t ns_envid)
 	uint32_t whom;
 	int perm;
     
+    cprintf("envid in input is [%08x]\n", ns_envid);
     while(1)
     {
         while ((nsipcbuf.pkt.jp_len = sys_rx_receive(E1000_DEFAULT_BUS, 

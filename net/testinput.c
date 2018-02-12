@@ -89,27 +89,29 @@ umain(int argc, char **argv)
 	}
 
 	cprintf("Sending ARP announcement...\n");
-	announce();
+    for (i = 0; i < 1; i++) {
+        announce();
 
-	while (1) {
-		envid_t whom;
-		int perm;
+        while (1) {
+            envid_t whom;
+            int perm;
 
-		int32_t req = ipc_recv((int32_t *)&whom, pkt, &perm);
-		if (req < 0)
-			panic("ipc_recv: %e", req);
-		if (whom != input_envid)
-			panic("IPC from unexpected environment %08x", whom);
-		if (req != NSREQ_INPUT)
-			panic("Unexpected IPC %d", req);
+            int32_t req = ipc_recv((int32_t *)&whom, pkt, &perm);
+            if (req < 0)
+                panic("ipc_recv: %e", req);
+            if (whom != input_envid)
+                panic("IPC from unexpected environment %08x", whom);
+            if (req != NSREQ_INPUT)
+                panic("Unexpected IPC %d", req);
 
-		hexdump("input: ", pkt->jp_data, pkt->jp_len);
-		cprintf("\n");
+            hexdump("input: ", pkt->jp_data, pkt->jp_len);
+            cprintf("\n");
 
-		// Only indicate that we're waiting for packets once
-		// we've received the ARP reply
-		if (first)
-			cprintf("Waiting for packets...\n");
-		first = 0;
-	}
+            // Only indicate that we're waiting for packets once
+            // we've received the ARP reply
+            if (first)
+                cprintf("Waiting for packets...\n");
+            first = 0;
+        }
+    }
 }

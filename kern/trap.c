@@ -231,11 +231,12 @@ trap_dispatch(struct Trapframe *tf)
         case IRQ_OFFSET + IRQ_TIMER:
             lapic_eoi();
             time_tick();
-            if (++counter >= 100)
-            {
-                counter = 0;
-                sched_yield();
-            }
+            sched_yield();
+//            if (++counter >= 10)
+//            {
+//                counter = 0;
+//                sched_yield();
+//            }
             break;
         
         // Handle keyboard and serial interrupts.

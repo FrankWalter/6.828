@@ -129,11 +129,12 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 #endif /* ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS */
 
   netif_set_addr(netif, ipaddr, netmask, gw);
-
+  
   /* call user specified initialization function for netif */
   if (init(netif) != ERR_OK) {
     return NULL;
   }
+  
 
   /* add this netif to the list */
   netif->next = netif_list;
@@ -145,6 +146,7 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   if (netif->flags & NETIF_FLAG_IGMP) {
     igmp_start( netif);
   }
+  
 #endif /* LWIP_IGMP */
 
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",

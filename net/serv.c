@@ -80,6 +80,7 @@ static void
 lwip_init(struct netif *nif, void *if_state,
 	  uint32_t init_addr, uint32_t init_mask, uint32_t init_gw)
 {
+    
 	struct ip_addr ipaddr, netmask, gateway;
 	ipaddr.addr  = init_addr;
 	netmask.addr = init_mask;
@@ -90,7 +91,7 @@ lwip_init(struct netif *nif, void *if_state,
 			   jif_init,
 			   ip_input))
 		panic("lwip_init: error in netif_add\n");
-
+    cprintf("enter lwip_init\n");
 	netif_set_default(nif);
 	netif_set_up(nif);
 }
@@ -136,24 +137,33 @@ serve_init(uint32_t ipaddr, uint32_t netmask, uint32_t gw)
 	int r;
 	lwip_core_lock();
 
+    
 	uint32_t done = 0;
 	tcpip_init(&tcpip_init_done, &done);
 	lwip_core_unlock();
 	thread_wait(&done, 0, (uint32_t)~0);
 	lwip_core_lock();
 
+
 	lwip_init(&nif, &output_envid, ipaddr, netmask, gw);
+    cprintf("flag\n");
+//    struct in_addr ia = {ipaddr};
+//	cprintf("ns: %02x:%02x:%02x:%02x:%02x:%02x"
+//		" bound to static IP %s\n",
+//		nif.hwaddr[0], nif.hwaddr[1], nif.hwaddr[2],
+//		nif.hwaddr[3], nif.hwaddr[4], nif.hwaddr[5],
+//		inet_ntoa(ia));
 
 	start_timer(&t_arp, &etharp_tmr, "arp timer", ARP_TMR_INTERVAL);
 	start_timer(&t_tcpf, &tcp_fasttmr, "tcp f timer", TCP_FAST_INTERVAL);
 	start_timer(&t_tcps, &tcp_slowtmr, "tcp s timer", TCP_SLOW_INTERVAL);
 
-	struct in_addr ia = {ipaddr};
-	cprintf("ns: %02x:%02x:%02x:%02x:%02x:%02x"
-		" bound to static IP %s\n",
-		nif.hwaddr[0], nif.hwaddr[1], nif.hwaddr[2],
-		nif.hwaddr[3], nif.hwaddr[4], nif.hwaddr[5],
-		inet_ntoa(ia));
+//	struct in_addr ia = {ipaddr};
+//	cprintf("ns: %02x:%02x:%02x:%02x:%02x:%02x"
+//		" bound to static IP %s\n",
+//		nif.hwaddr[0], nif.hwaddr[1], nif.hwaddr[2],
+//		nif.hwaddr[3], nif.hwaddr[4], nif.hwaddr[5],
+//		inet_ntoa(ia));
 
 	lwip_core_unlock();
 
@@ -260,6 +270,8 @@ serve(void) {
 	uint32_t whom;
 	int i, perm;
 	void *va;
+    
+    cprintf("enter serve\n");
 
 	while (1) {
 		// ipc_recv will block the entire process, so we flush
@@ -336,6 +348,7 @@ umain(int argc, char **argv)
 		input(ns_envid);
 		return;
 	}
+    cprintf("input_envid is [%08x]\n", input_envid);
 
 	// fork off the output thread that will send the packets to the NIC
 	// driver
@@ -343,9 +356,11 @@ umain(int argc, char **argv)
 	if (output_envid < 0)
 		panic("error forking");
 	else if (output_envid == 0) {
+        cprintf("I'm the child, and my envid is [%08x]\n", thisenv->env_id);
 		output(ns_envid);
 		return;
 	}
+    cprintf("output_envid is [%08x]\n", output_envid);
 
 	// lwIP requires a user threading library; start the library and jump
 	// into a thread to continue initialization.

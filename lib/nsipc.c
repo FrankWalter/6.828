@@ -26,6 +26,7 @@ nsipc(unsigned type)
 		cprintf("[%08x] nsipc %d\n", thisenv->env_id, type);
 
 	ipc_send(nsenv, type, &nsipcbuf, PTE_P|PTE_W|PTE_U);
+    cprintf("[%08x] => [%08x]\n", thisenv->env_id, nsenv);
 	return ipc_recv(NULL, NULL, NULL);
 }
 

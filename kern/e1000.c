@@ -59,8 +59,8 @@ static void rx_init(struct pci_func *pcif)
     pci_write_conf_uint32_t(pcif, E1000_RDBAL, PADDR((void*)pcif->rx_desc_ring));
     pci_write_conf_uint32_t(pcif, E1000_RDBAH, 0);
     pci_write_conf_uint32_t(pcif, E1000_RDLEN, rdlen * sizeof(struct e1000_rx_desc));
-    pci_write_conf_uint32_t(pcif, E1000_RDH, 1);
-    pci_write_conf_uint32_t(pcif, E1000_RDT, rdlen);
+    pci_write_conf_uint32_t(pcif, E1000_RDH, 0);
+    pci_write_conf_uint32_t(pcif, E1000_RDT, rdlen - 1);
     
     for (i = 0; i < rdlen; i++)
     {
@@ -97,11 +97,12 @@ int rx_receive(struct pci_func *pcif, void *data)
 {   
     uint32_t new_tail;
     new_tail = (pci_read_conf_uint32_t(pcif, E1000_RDT) + 1) % rdlen;
-//    cprintf("head is %d, tail is %d\n", 
-//            pci_read_conf_uint32_t(pcif, E1000_RDH), 
-//            pci_read_conf_uint32_t(pcif, E1000_RDT));
+
     if (!(pcif->rx_desc_ring[new_tail].status & E1000_RXD_STAT_DD))
+    {
+        //pci_write_conf_uint32_t(pcif, E1000_RDT, (new_tail + rdlen - 2) % rdlen);
         return -E_RX_EMPTY;
+    }
     memmove(data, KADDR((physaddr_t)(pcif->rx_desc_ring[new_tail].addr)), pcif->rx_desc_ring[new_tail].length);
     pci_write_conf_uint32_t(pcif, E1000_RDT, new_tail);
     pcif->rx_desc_ring[new_tail].status = 0;

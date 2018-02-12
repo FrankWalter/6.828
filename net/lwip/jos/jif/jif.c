@@ -56,6 +56,7 @@ low_level_init(struct netif *netif)
 {
     int r;
 
+    cprintf("enter low_level_init\n");
     netif->hwaddr_len = 6;
     netif->mtu = 1500;
     netif->flags = NETIF_FLAG_BROADCAST;
@@ -105,7 +106,9 @@ low_level_output(struct netif *netif, struct pbuf *p)
 
     pkt->jp_len = txsize;
 
+    cprintf("low_level_output flag1, jif->envid is [%08x]\n", jif->envid);
     ipc_send(jif->envid, NSREQ_OUTPUT, (void *)pkt, PTE_P|PTE_W|PTE_U);
+    cprintf("low_level_output flag2\n");
     sys_page_unmap(0, (void *)pkt);
 
     return ERR_OK;
@@ -243,14 +246,15 @@ jif_init(struct netif *netif)
     jif->envid = *output_envid; 
 
     low_level_init(netif);
-
+    
     etharp_init();
-
+    
     // qemu user-net is dumb; if the host OS does not send and ARP request
     // first, the qemu will send packets destined for the host using the mac
     // addr 00:00:00:00:00; do a arp request for the user-net NAT at 10.0.2.2
     uint32_t ipaddr = inet_addr("10.0.2.2");
     etharp_query(netif, (struct ip_addr *) &ipaddr, 0);
+    cprintf("jif_init flag\n");
 
     return ERR_OK;
 }

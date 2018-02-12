@@ -893,6 +893,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   i = find_entry(ipaddr, ETHARP_TRY_HARD);
 #endif /* LWIP_NETIF_HWADDRHINT */
 
+  cprintf("etharp_query flag1\n");
   /* could not find or create entry? */
   if (i < 0) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not create ARP entry\n"));
@@ -902,7 +903,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     }
     return (err_t)i;
   }
-
+cprintf("etharp_query flag2\n");
   /* mark a fresh entry as pending (we just sent a request) */
   if (arp_table[i].state == ETHARP_STATE_EMPTY) {
     arp_table[i].state = ETHARP_STATE_PENDING;
@@ -912,7 +913,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   LWIP_ASSERT("arp_table[i].state == PENDING or STABLE",
   ((arp_table[i].state == ETHARP_STATE_PENDING) ||
    (arp_table[i].state == ETHARP_STATE_STABLE)));
-
+cprintf("etharp_query flag3\n");
   /* do we have a pending entry? or an implicit query request? */
   if ((arp_table[i].state == ETHARP_STATE_PENDING) || (q == NULL)) {
     /* try to resolve it; send out ARP request */
@@ -924,6 +925,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
          etharp_query again could lead to sending the queued packets. */
     }
   }
+  cprintf("etharp_query flag4\n");
   
   /* packet given? */
   if (q != NULL) {
@@ -1054,7 +1056,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   hdr = p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
   hdr->opcode = htons(opcode);
-
+cprintf("etharp_raw flag1\n");
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
   k = ETHARP_HWADDR_LEN;
@@ -1077,6 +1079,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 #endif /* LWIP_AUTOIP */
     hdr->ethhdr.src.addr[k]  = ethsrc_addr->addr[k];
   }
+  cprintf("etharp_raw flag2\n");
   hdr->sipaddr = *(struct ip_addr2 *)ipsrc_addr;
   hdr->dipaddr = *(struct ip_addr2 *)ipdst_addr;
 
@@ -1084,10 +1087,11 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   hdr->proto = htons(ETHTYPE_IP);
   /* set hwlen and protolen together */
   hdr->_hwlen_protolen = htons((ETHARP_HWADDR_LEN << 8) | sizeof(struct ip_addr));
-
+  cprintf("etharp_raw flag3\n");
   hdr->ethhdr.type = htons(ETHTYPE_ARP);
   /* send ARP query */
   result = netif->linkoutput(netif, p);
+  cprintf("etharp_raw flag4\n");
   ETHARP_STATS_INC(etharp.xmit);
   /* free ARP query packet */
   pbuf_free(p);
